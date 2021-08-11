@@ -21,7 +21,9 @@ namespace GetRedProject
 
         const string enterButton = "/html/body/div/div/div/form/div[3]/button";
         const string cardButton = "#miEvents > a:nth-child(1)";
-        const string table = "#div-Student__RecordBook > div.table-responsive > table";
+        const string tableSem = "#div-Student__RecordBook > div.table-responsive > table";
+        const string tableOther = "#div-Student__RecordBook > div:nth-child(5) > table";
+        const string activeButton = "#recordBook__Pager > li.page-item.active"; 
 
         public GetRedProjectForm()
         {
@@ -59,45 +61,144 @@ namespace GetRedProject
             }
             
             IList<IWebElement> elements = driver.FindElements(By.ClassName("page-item"));
-            SortedList<string, string> subjects = new SortedList<string, string>();
-            for (int i = 0; i < elements.Count-1; i++)
+            SortedList<string, int> subjects = new SortedList<string, int>();
+            int btnNum = 1;
+            for (int i = 1; i < elements.Count; i++)
             {
-                if (Regex.IsMatch(elements.ElementAt(i).Text, @"\d семестр"))
+                if (Regex.IsMatch(driver.FindElement(By.CssSelector(activeButton)).Text, @"\d семестр"))
                 {
-                    IWebElement tbl = driver.FindElement(By.CssSelector(table));
+                    //Thread.Sleep(100);
+                    IWebElement tbl = driver.FindElement(By.CssSelector(tableSem));
                     IList<IWebElement> rows = tbl.FindElements(By.TagName("tr"));
                     foreach (var row in rows.Skip(1))
-                    {
+                    {                      
                         IList<IWebElement> cols = row.FindElements(By.TagName("td"));
                         if (!Regex.IsMatch(cols.ElementAt(0).Text, "зачёты") && !Regex.IsMatch(cols.ElementAt(0).Text, "экзамены"))
                         {
+                            //Thread.Sleep(100);
                             if (!Regex.IsMatch(cols.ElementAt(3).Text, "Зачтено"))
                             {
                                 if (subjects.ContainsKey(cols.ElementAt(0).Text))
                                 {
                                     subjects.Remove(cols.ElementAt(0).Text);
-                                    subjects.Add(cols.ElementAt(0).Text, cols.ElementAt(3).Text);
+                                    switch (cols.ElementAt(3).Text)
+                                    {
+                                        case "Отлично":
+                                            subjects.Add(cols.ElementAt(0).Text, 5);
+                                            break;
+                                        case "Хорошо":
+                                            subjects.Add(cols.ElementAt(0).Text, 4);
+                                            break;
+                                        case "Удовл.":
+                                            subjects.Add(cols.ElementAt(0).Text, 3);
+                                            break;
+                                        default:
+                                            subjects.Add(cols.ElementAt(0).Text, 2);
+                                            break;
+                                    }                                    
                                 }     
                                 else
                                 {
-                                    subjects.Add(cols.ElementAt(0).Text, cols.ElementAt(3).Text);
+                                    switch (cols.ElementAt(3).Text)
+                                    {
+                                        case "Отлично":
+                                            subjects.Add(cols.ElementAt(0).Text, 5);
+                                            break;
+                                        case "Хорошо":
+                                            subjects.Add(cols.ElementAt(0).Text, 4);
+                                            break;
+                                        case "Удовл.":
+                                            subjects.Add(cols.ElementAt(0).Text, 3);
+                                            break;
+                                        default:
+                                            subjects.Add(cols.ElementAt(0).Text, 2);
+                                            break;
+                                    }
                                 }
-                            }                
+                            } 
+                            else
+                            {
+                                if (subjects.ContainsKey(cols.ElementAt(0).Text))
+                                {
+                                    subjects.Remove(cols.ElementAt(0).Text);
+                                }
+                            }
                         }
                     }
                 }
                 else
                 {
-                    
+                    IWebElement tbl = driver.FindElement(By.CssSelector(tableOther));
+                    IList<IWebElement> rows = tbl.FindElements(By.TagName("tr"));
+                    foreach (var row in rows.Skip(1))
+                    {
+                        IList<IWebElement> cols = row.FindElements(By.TagName("td"));
+                        if (!Regex.IsMatch(cols.ElementAt(4).Text, "Зачтено"))
+                        {
+                            if (subjects.ContainsKey(cols.ElementAt(0).Text))
+                            {
+                                switch (cols.ElementAt(4).Text)
+                                {
+                                    case "Отлично":
+                                        subjects.Add(cols.ElementAt(0).Text + " (Курсовая)", 5);
+                                        break;
+                                    case "Хорошо":
+                                        subjects.Add(cols.ElementAt(0).Text + " (Курсовая)", 4);
+                                        break;
+                                    case "Удовл.":
+                                        subjects.Add(cols.ElementAt(0).Text + " (Курсовая)", 3);
+                                        break;
+                                    default:
+                                        subjects.Add(cols.ElementAt(0).Text + " (Курсовая)", 2);
+                                        break;
+                                }
+                            }
+                            else
+                            {
+                                switch (cols.ElementAt(4).Text)
+                                {
+                                    case "Отлично":
+                                        subjects.Add(cols.ElementAt(0).Text, 5);
+                                        break;
+                                    case "Хорошо":
+                                        subjects.Add(cols.ElementAt(0).Text, 4);
+                                        break;
+                                    case "Удовл.":
+                                        subjects.Add(cols.ElementAt(0).Text, 3);
+                                        break;
+                                    default:
+                                        subjects.Add(cols.ElementAt(0).Text, 2);
+                                        break;
+                                }
+                            }
+                        }
+                    }
                 }
-                
-                
-                int btnNum = i + 1;
-                Thread.Sleep(300);
+
+                Thread.Sleep(100);
+                btnNum++;
                 driver.FindElement(By.CssSelector("#recordBook__Pager > li:nth-child(" + btnNum + ")")).Click();
+                Thread.Sleep(100);
             }
 
+            double avg = 0;
+            foreach (var mark in subjects.Values)
+                avg += mark;
+            avg /= subjects.Count;
+            
+            if (subjects.ContainsValue(3)) 
+            {
+                label1.Text = "Оценка 3 за " + subjects.ElementAt(subjects.IndexOfValue(3));
+            }
+            else
+            {
+                label1.Text = "Ваш средний балл: " + Math.Round(avg, 2); 
+            }
 
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
             Thread.Sleep(4000);
             driver.Quit();
             Environment.Exit(0);
