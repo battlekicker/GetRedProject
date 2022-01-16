@@ -32,6 +32,22 @@ namespace GetRedProject
 
         private void StartButton_Click(object sender, EventArgs e) // TODO: переделать в метод init, кнопку убрать
         {
+
+            BrowserCheck();
+            SiteEntry();
+            ScoreCalc(DataGathering());
+
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            Thread.Sleep(4000);
+            driver.Quit();
+            Environment.Exit(0);
+        }
+
+        public void BrowserCheck()
+        {
             var process = Process.GetProcessesByName("chrome");
             if (process.Length != 0)
             {
@@ -45,7 +61,10 @@ namespace GetRedProject
                     Environment.Exit(0);
                 }
             }
+        }
 
+        public void SiteEntry()
+        {
             var options = new ChromeOptions();
             options.AddArgument("user-data-dir=C:\\Users\\" + Environment.UserName + "\\AppData\\Local\\Google\\Chrome\\User Data");
             driver = new ChromeDriver(options);
@@ -59,7 +78,11 @@ namespace GetRedProject
             {
                 driver.FindElement(By.CssSelector(cardButton)).Click();
             }
-            
+            driver.FindElement(By.CssSelector(cardButton)).Click();
+        }
+
+        public SortedList<string, int> DataGathering()
+        {
             IList<IWebElement> elements = driver.FindElements(By.ClassName("page-item"));
             SortedList<string, int> subjects = new SortedList<string, int>();
             int btnNum = 1;
@@ -71,7 +94,7 @@ namespace GetRedProject
                     IWebElement tbl = driver.FindElement(By.CssSelector(tableSem));
                     IList<IWebElement> rows = tbl.FindElements(By.TagName("tr"));
                     foreach (var row in rows.Skip(1))
-                    {                      
+                    {
                         IList<IWebElement> cols = row.FindElements(By.TagName("td"));
                         if (!Regex.IsMatch(cols.ElementAt(0).Text, "зачёты") && !Regex.IsMatch(cols.ElementAt(0).Text, "экзамены"))
                         {
@@ -95,8 +118,8 @@ namespace GetRedProject
                                         default:
                                             subjects.Add(cols.ElementAt(0).Text, 2);
                                             break;
-                                    }                                    
-                                }     
+                                    }
+                                }
                                 else
                                 {
                                     switch (cols.ElementAt(3).Text)
@@ -115,7 +138,7 @@ namespace GetRedProject
                                             break;
                                     }
                                 }
-                            } 
+                            }
                             else
                             {
                                 if (subjects.ContainsKey(cols.ElementAt(0).Text))
@@ -181,27 +204,24 @@ namespace GetRedProject
                 Thread.Sleep(100);
             }
 
+            return subjects;
+        }
+
+        public void ScoreCalc(SortedList<string, int> subjects)
+        {
             double avg = 0;
             foreach (var mark in subjects.Values)
                 avg += mark;
             avg /= subjects.Count;
-            
-            if (subjects.ContainsValue(3)) 
+
+            if (subjects.ContainsValue(3))
             {
-                label1.Text = "Оценка 3 за " + subjects.ElementAt(subjects.IndexOfValue(3));
+                label1.Text = "Ваш средний балл: " + Math.Round(avg, 2) + "   (Оценка 3 за " + subjects.ElementAt(subjects.IndexOfValue(3)) + ")";
             }
             else
             {
-                label1.Text = "Ваш средний балл: " + Math.Round(avg, 2); 
+                label1.Text = "Ваш средний балл: " + Math.Round(avg, 2);
             }
-
-        }
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-            Thread.Sleep(4000);
-            driver.Quit();
-            Environment.Exit(0);
         }
     }
 }
