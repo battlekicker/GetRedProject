@@ -90,7 +90,7 @@ namespace GetRedProject
             {
                 if (Regex.IsMatch(driver.FindElement(By.CssSelector(activeButton)).Text, @"\d семестр"))
                 {
-                    //Thread.Sleep(100);
+                    Thread.Sleep(100);
                     IWebElement tbl = driver.FindElement(By.CssSelector(tableSem));
                     IList<IWebElement> rows = tbl.FindElements(By.TagName("tr"));
                     foreach (var row in rows.Skip(1))
@@ -98,7 +98,7 @@ namespace GetRedProject
                         IList<IWebElement> cols = row.FindElements(By.TagName("td"));
                         if (!Regex.IsMatch(cols.ElementAt(0).Text, "зачёты") && !Regex.IsMatch(cols.ElementAt(0).Text, "экзамены"))
                         {
-                            //Thread.Sleep(100);
+                            Thread.Sleep(100);
                             if (!Regex.IsMatch(cols.ElementAt(3).Text, "Зачтено"))
                             {
                                 if (subjects.ContainsKey(cols.ElementAt(0).Text))
@@ -148,6 +148,10 @@ namespace GetRedProject
                             }
                         }
                     }
+                }
+                else if (Regex.IsMatch(driver.FindElement(By.CssSelector(activeButton)).Text, @"Факультативы"))
+                {
+
                 }
                 else
                 {
